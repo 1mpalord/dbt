@@ -9,15 +9,14 @@
 
 {{ config(materialized='table') }}
 
-with source_data as (
+with saleOrder as (
 
     select 1 as id
     union all
     select null as id
 
 )
-
-select *
+(revenue - product cost)
 from source_data
 
 /*
