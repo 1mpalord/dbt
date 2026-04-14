@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: mart_executive_pulse
+    description: >
+      High-level business summary. Use this for 'How is the company doing?' questions.
+      It combines Geography, Product, and Sales performance.
+    columns:
+      - name: revenue
+        description: "Total sales amount. Use this to describe growth."
+      - name: profit
+        description: "Net profit. The most important metric for business health."
+
+  - name: mart_customer_intelligence
+    description: >
+      Detailed customer profiles with predictive tags. Use this for personalization, 
+      identifying VIPs, or checking retention risk.
+    columns:
+      - name: retention_status
+        description: "Predictive Metric: 'Active' if they bought in 2026, 'At Risk' otherwise."
+      - name: recommended_action
+        description: "Next Best Action: The AI should use this to suggest what to say to the customer."
+      - name: ai_greeting
+        description: "The personalized greeting to be passed to ElevenLabs."
+
+  - name: mart_product_recommendations
+    description: >
+      The 'Recommendation Engine' source. Use this to suggest products based on 
+      category affinity and margins.
+    columns:
+      - name: ai_recommendation_script
+        description: "A pre-written script fragment for the AI to narrate."

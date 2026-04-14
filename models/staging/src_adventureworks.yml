@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: adventureworks
+    schema: bronze # The schema name you used in Supabase
+    tables:
+      - name: Sales
+      - name: Products
+      - name: Customers
+      - name: Date
+      - name: Reseller
+      - name: SalesTerritory
+      - name: SalesOrder

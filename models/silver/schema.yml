@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: "The central fact table containing every transaction. Use this for all revenue, profit, and volume calculations."
+    columns:
+      - name: sales_order_line_id
+        description: "Primary Key. Unique identifier for each line item in an order."
+        tests:
+          - unique
+          - not_null
+
+      - name: total_profit
+        description: "Descriptive Metric: Net profit calculated as (Sales - Cost). Primary KPI for business health."
+
+      - name: profit_margin
+        description: "Descriptive Metric: Profitability ratio. High values (>0.5) indicate premium products."
+
+      - name: customer_cohort
+        description: "Predictive Attribute: Categorizes customers as 'New' or 'Returning' based on purchase history."
+
+  - name: dim_product
+    description: "The product catalog. Use this to filter sales by category, color, or price segment."
+    columns:
+      - name: product_id
+        description: "Primary Key. Links to fct_sales."
+        tests:
+          - unique
+          - not_null
+
+      - name: product_role
+        description: "Predictive Attribute: Identifies if a product is a 'Core Product' (Bikes) or an 'Add-on' (Helmets/Lights)."
+
+  - name: dim_territory
+    description: "Look up table for geographic performance. Use for 'Where' questions."
+    columns:
+      - name: market_priority
+        description: "Executive logic: 'Primary Market' (USA/North America) vs 'Emerging Markets'."
+
+  - name: dim_customer
+    description: "Customer profile data. Use for personalization and 'Customer Memory'."
+    columns:
+      - name: ai_greeting
+        description: "Contextual string used for ElevenLabs voice generation (e.g., 'Hi Jon!')."
