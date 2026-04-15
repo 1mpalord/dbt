@@ -27,6 +27,7 @@ SELECT
     s.sales_order_line_id,
     s.product_id,
     s.customer_id,
+    s.reseller_id,
     s.territory_id,
     s.effective_date_key,
 

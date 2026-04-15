@@ -20,7 +20,9 @@ models:
       - name: product_id
         description: "Foreign Key → dim_product. Links this sale to the product catalog."
       - name: customer_id
-        description: "Foreign Key → dim_customer. Links this sale to the customer profile."
+        description: "Foreign Key → dim_customer. Links this sale to the individual consumer profile (B2C)."
+      - name: reseller_id
+        description: "Foreign Key → dim_reseller. Links this sale to the business partner profile (B2B)."
       - name: territory_id
         description: "Foreign Key → dim_territory. Links this sale to the geographic region."
       - name: order_number

@@ -2,6 +2,7 @@ SELECT
     "SalesOrderLineKey" AS sales_order_line_id, -- Alias happens here!
     "ProductKey" AS product_id,
     "CustomerKey" AS customer_id,
+    "ResellerKey" AS reseller_id,
     "SalesTerritoryKey" AS territory_id,
     "OrderDateKey" AS effective_date_key,
     "Order Quantity" AS quantity,
