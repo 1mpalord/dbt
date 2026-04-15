@@ -358,3 +358,55 @@ models:
         description: "AI-generated recommendation based on growth and tier. E.g., 'Intervention: Schedule QBR' or 'VIP Nurture'."
       - name: partner_narrative
         description: "Natural language text for RAG summarization."
+
+  - name: mart_city_performance
+    description: >
+      City Performance Command Center. This table unifies both B2C (individual customers) 
+      and B2B (wholesale resellers) sales down to the city level. It bridges the gap between 
+      cities and macro territories.
+      
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED at the city level. Do NOT hallucinate raw transaction columns.
+      Use `lifetime_revenue`, `latest_year_revenue`, and `lifetime_unique_buyers` directly. 
+      DO NOT try to `SUM(revenue)` for a single city.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "What are our top performing cities in the Southwest?"
+      - "Which cities are B2B hubs vs B2C hubs?"
+      - "What is the revenue for Los Angeles?"
+      - "Show me cities with the highest YoY growth."
+    columns:
+      - name: city_name
+        description: "The name of the city."
+      - name: state_province
+        description: "The state, province or localized region of the city."
+      - name: country_name
+        description: "The country."
+      - name: region_name
+        description: "The sales region (e.g., 'Southwest', 'France'). Use this to filter by territory!"
+      - name: territory_group
+        description: "The broader territory group (e.g., 'North America', 'Europe')."
+      - name: full_city_display
+        description: "A clean, unified display name: 'City, State (Country)'."
+      - name: lifetime_revenue
+        description: "Total all-time revenue generated in this city across both B2C and B2B."
+      - name: lifetime_profit
+        description: "Total all-time profit generated in this city."
+      - name: lifetime_orders
+        description: "Total distinct orders placed from this city."
+      - name: lifetime_unique_buyers
+        description: "Total unique B2C customers AND B2B resellers in this city."
+      - name: lifetime_margin
+        description: "Profit margin efficiency for this city (profit / revenue)."
+      - name: latest_year_revenue
+        description: "Revenue generated in the most recent fiscal year."
+      - name: latest_year_b2c_revenue
+        description: "Revenue specifically from individual consumers (Internet sales) in the most recent year."
+      - name: latest_year_b2b_revenue
+        description: "Revenue specifically from wholesale resellers in the most recent year."
+      - name: channel_dominance
+        description: "'B2B Hub', 'B2C Hub', or 'Balanced Market' based on the revenue mix."
+      - name: yoy_growth_pct
+        description: "Year-over-Year revenue growth percentage for the city."
+      - name: city_narrative
+        description: "Natural language text summarizing the city's historical and recent performance."

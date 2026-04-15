@@ -11,20 +11,32 @@ models:
       IMPORTANT FOR AI: This table contains pre-joined time dimensions (order_date, fiscal_year, 
       fiscal_quarter, order_month) and channel information (channel_type). You can answer most 
       "when" and "how much" questions directly from this table.
+      
+      🚨 ATTENTION AI: STAR SCHEMA ROUTING 🚨
+      This is a FACT table. It contains the core metrics, but lacks granular attributes like `city_name` or `category_name`. 
+      If you need granular attributes, YOU MUST JOIN IT to the correct dimension using these exact patterns:
+      - For B2C Customer info (City, Identity): `JOIN silver.dim_customer c ON fct_sales.customer_id = c.customer_id`
+      - For B2B Reseller info (City, Tier): `JOIN silver.dim_reseller r ON fct_sales.reseller_id = r.reseller_id`
+      - For Product info (Name, Category): `JOIN silver.dim_product p ON fct_sales.product_id = p.product_id`
+      - For Territory info (Region, Market): `JOIN silver.dim_territory t ON fct_sales.territory_id = t.territory_id`
+      - For custom Date filters: `JOIN silver.dim_date d ON fct_sales.effective_date_key = d.date_key`
+      - For Order-level aggregates (Order Value, Item Count): `JOIN silver.dim_sales_order so ON fct_sales.sales_order_line_id = so.sales_order_line_id`
     columns:
       - name: sales_order_line_id
-        description: "Primary Key. Unique identifier for each line item in an order."
+        description: "Primary Key. JOIN KEY: `ON fct_sales.sales_order_line_id = dim_sales_order.sales_order_line_id`."
         tests:
           - unique
           - not_null
       - name: product_id
-        description: "Foreign Key → dim_product. Links this sale to the product catalog."
+        description: "Foreign Key. JOIN KEY: `ON fct_sales.product_id = dim_product.product_id`. Links sale to the product catalog."
       - name: customer_id
-        description: "Foreign Key → dim_customer. Links this sale to the individual consumer profile (B2C)."
+        description: "Foreign Key. JOIN KEY: `ON fct_sales.customer_id = dim_customer.customer_id`. Links sale to the individual consumer profile (B2C)."
       - name: reseller_id
-        description: "Foreign Key → dim_reseller. Links this sale to the business partner profile (B2B)."
+        description: "Foreign Key. JOIN KEY: `ON fct_sales.reseller_id = dim_reseller.reseller_id`. Links sale to the business partner profile (B2B)."
       - name: territory_id
-        description: "Foreign Key → dim_territory. Links this sale to the geographic region."
+        description: "Foreign Key. JOIN KEY: `ON fct_sales.territory_id = dim_territory.territory_id`. Links sale to the geographic region."
+      - name: effective_date_key
+        description: "Foreign Key. JOIN KEY: `ON fct_sales.effective_date_key = dim_date.date_key`. Links to the calendar dimension."
       - name: order_number
         description: "The human-readable order number (e.g., SO51131). Multiple line items share the same order_number."
       - name: channel_type
