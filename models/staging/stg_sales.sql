@@ -1,13 +1,12 @@
-{{ config(materialized='view') }}
-
 SELECT 
-    SalesOrderLineKey AS order_id,
-    ProductKey AS product_id,
-    CustomerKey AS customer_id,
-    Order Quantity AS quantity,
-    Unit Price AS unit_price,
-    Total Product Cost AS total_cost,
-    Sales Amount AS total_sales,
-    -- REQUIREMENT: Handle empty/null ShipDateKey
-    COALESCE(ShipDateKey, OrderDateKey) AS effective_date_key
+    "SalesOrderLineKey" AS sales_order_line_id, -- Alias happens here!
+    "ProductKey" AS product_id,
+    "CustomerKey" AS customer_id,
+    "SalesTerritoryKey" AS territory_id,
+    "OrderDateKey" AS effective_date_key,
+    "Order Quantity" AS quantity,
+    -- (The currency cleaning logic we discussed)
+    CAST(REPLACE(REPLACE("Unit Price", '$', ''), ',', '') AS DECIMAL(18,2)) AS unit_price,
+    CAST(REPLACE(REPLACE("Total Product Cost", '$', ''), ',', '') AS DECIMAL(18,2)) AS total_cost,
+    CAST(REPLACE(REPLACE("Sales Amount", '$', ''), ',', '') AS DECIMAL(18,2)) AS total_sales
 FROM {{ source('adventureworks', 'Sales') }}
