@@ -3,30 +3,290 @@ version: 2
 models:
   - name: mart_executive_pulse
     description: >
-      High-level business summary. Use this for 'How is the company doing?' questions.
-      It combines Geography, Product, and Sales performance.
+      The CEO/CFO dashboard in a single table. This is the primary table for answering 
+      high-level business questions like "how is the company doing?", "what's growing?", 
+      and "where should we invest?". Each row represents a unique combination of 
+      (fiscal_year × fiscal_quarter × month × territory × category × channel).
+      
+      KEY METRICS FOR AI:
+      - revenue_yoy_growth_pct: Year-over-year revenue growth. Use for trend analysis.
+      - revenue_contribution_pct: What % of total annual revenue this segment represents.
+      - revenue_trend_signal: Pre-computed trend indicator with emoji (🚀, 📈, 📉, 🔻).
+      - margin_health: Profitability assessment per segment.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "Which product category grew the fastest last year?"
+      - "What's our margin health in Europe?"
+      - "Show me declining segments"
+      - "Compare B2B vs B2C performance by region"
     columns:
+      - name: fiscal_year
+        description: "Fiscal year (e.g., 2020, 2021). Use for time-based filtering."
+      - name: fiscal_quarter
+        description: "Fiscal quarter (Q1-Q4). Use for quarterly analysis."
+      - name: order_month
+        description: "Month name. Use for seasonality patterns."
+      - name: territory_group
+        description: "Geographic region: 'North America', 'Europe', or 'Pacific'."
+      - name: country_name
+        description: "Specific country within the territory group."
+      - name: market_priority
+        description: "'Primary Market', 'Secondary Market', or 'Emerging Market'."
+      - name: category_name
+        description: "Product category: 'Bikes', 'Components', 'Clothing', 'Accessories'."
+      - name: product_role
+        description: "Product role in portfolio: 'Core Product', 'Component', 'Apparel', 'Add-on'."
+      - name: channel_type
+        description: "Sales channel: 'Internet' (B2C) or 'Reseller' (B2B)."
       - name: revenue
-        description: "Total sales amount. Use this to describe growth."
+        description: "Total sales revenue for this segment in USD."
       - name: profit
-        description: "Net profit. The most important metric for business health."
+        description: "Total net profit for this segment in USD."
+      - name: avg_margin
+        description: "Average profit margin ratio for this segment (0 to 1)."
+      - name: order_count
+        description: "Number of distinct orders in this segment."
+      - name: units_sold
+        description: "Total units sold in this segment."
+      - name: unique_customers
+        description: "Number of unique customers in this segment."
+      - name: avg_deal_size
+        description: "Average revenue per transaction line item."
+      - name: revenue_contribution_pct
+        description: "What percentage of the year's total revenue this segment contributes. Use for finding top/bottom contributors."
+      - name: profit_contribution_pct
+        description: "What percentage of the year's total profit this segment contributes."
+      - name: revenue_yoy_growth_pct
+        description: "Year-over-year revenue growth percentage. Positive = growing, negative = declining. NULL if no prior year data."
+      - name: profit_yoy_growth_pct
+        description: "Year-over-year profit growth percentage."
+      - name: orders_yoy_growth_pct
+        description: "Year-over-year order volume growth percentage."
+      - name: revenue_trend_signal
+        description: "Pre-computed trend with emoji: '🚀 Strong Growth (>20%)', '📈 Growing', '📉 Declining', '🔻 Significant Decline (>20%)', 'New Segment'."
+      - name: margin_health
+        description: "Profitability assessment: 'Excellent Margins' (>50%), 'Healthy Margins' (>30%), 'Thin Margins' (>10%), 'Margin Pressure' (<10%)."
+      - name: segment_narrative
+        description: "Pre-written AI-friendly text summary of this segment's performance."
 
   - name: mart_customer_intelligence
     description: >
-      Detailed customer profiles with predictive tags. Use this for personalization, 
-      identifying VIPs, or checking retention risk.
+      The ultimate customer 360° view. Each row is one unique customer with their complete 
+      profile, purchase history, behavioral classification, channel preference, product affinity, 
+      and AI-generated next best action recommendation.
+      
+      IMPORTANT FOR AI: This is a SELF-CONTAINED table. You do NOT need to join to any other 
+      table to answer customer questions. Lifetime revenue, retention status, value tier, 
+      favorite category, channel preference, and recommended actions are all pre-computed.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "Who are our top 10 VIP customers?"
+      - "Which customers are at risk of churning?"
+      - "What should we recommend to Jon Yang?"
+      - "How many platinum customers do we have in Australia?"
+      - "Generate a win-back campaign list"
     columns:
-      - name: retention_status
-        description: "Predictive Metric: 'Active' if they bought in 2026, 'At Risk' otherwise."
-      - name: recommended_action
-        description: "Next Best Action: The AI should use this to suggest what to say to the customer."
+      - name: customer_id
+        description: "Primary Key. Unique customer identifier."
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: "Customer's full name."
+      - name: customer_bio
+        description: "Natural language profile: 'Jon Yang from Rockhampton, Queensland, Australia'."
       - name: ai_greeting
-        description: "The personalized greeting to be passed to ElevenLabs."
+        description: "Personalized greeting for chatbot/voice AI: 'Hi Jon!'."
+      - name: market_segment
+        description: "'Domestic' (US) or 'International'."
+      - name: customer_value_tier
+        description: "Value tier: 'Platinum' ($10K+), 'Gold' ($5K+), 'Silver' ($1K+), 'Bronze' (<$1K)."
+      - name: purchase_frequency
+        description: "'Power Buyer' (20+), 'Regular' (5-19), 'Occasional' (1-4), 'Never Purchased'."
+      - name: retention_status
+        description: "'Active', 'At Risk', 'Churned', or 'Prospect'."
+      - name: lifetime_revenue
+        description: "Total lifetime revenue from this customer in USD."
+      - name: lifetime_profit
+        description: "Total lifetime profit from this customer in USD."
+      - name: total_orders
+        description: "Total number of distinct orders placed."
+      - name: avg_order_value
+        description: "Average revenue per order."
+      - name: first_order_date
+        description: "Date of the customer's first purchase."
+      - name: last_order_date
+        description: "Date of the customer's most recent purchase."
+      - name: years_active
+        description: "Number of distinct fiscal years with activity."
+      - name: channel_preference
+        description: "'Online-First', 'Store-First', or 'Balanced' based on revenue split."
+      - name: favorite_category
+        description: "The product category this customer purchases most frequently."
+      - name: favorite_subcategory
+        description: "The product subcategory this customer purchases most frequently."
+      - name: recommended_action
+        description: >
+          AI-generated next best action based on behavior. Examples:
+          - 'Win-Back Campaign: High-value customer lost.'
+          - 'Retention Alert: VIP customer going quiet.'
+          - 'Upsell Premium: Customer has strong purchase history.'
+          - 'Cross-Sell: Suggest complementary products.'
+      - name: customer_narrative
+        description: "Natural language summary for RAG context. E.g., 'Jon Yang is a Gold-tier Active customer from Australia who has spent $12,345 across 15 orders. Their favorite category is Bikes.'"
 
   - name: mart_product_recommendations
     description: >
-      The 'Recommendation Engine' source. Use this to suggest products based on 
-      category affinity and margins.
+      Product intelligence with market basket analysis and cross-sell recommendations. 
+      Each row is one product with complete sales performance, channel breakdown, 
+      comparative benchmarks, and auto-generated recommendation scripts.
+      
+      FEATURES:
+      - Market basket analysis: identifies which products are frequently bought together.
+      - Category benchmarking: compares each product against its category average.
+      - Dynamic AI scripts: recommendation text changes based on product performance context.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "What's our best selling product?"
+      - "Which products should we bundle together?"
+      - "Show underperforming products with high margins"
+      - "What should we recommend with Mountain Bikes?"
     columns:
+      - name: product_id
+        description: "Primary Key."
+        tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: "Full product display name."
+      - name: category_name
+        description: "Top-level category."
+      - name: subcategory_name
+        description: "Detailed subcategory."
+      - name: price_segment
+        description: "Price tier: 'Ultra-Premium', 'Premium', 'Mid-Range', 'Entry-Level', 'Budget'."
+      - name: product_role
+        description: "Portfolio role: 'Core Product', 'Component', 'Apparel', 'Add-on'."
+      - name: total_revenue
+        description: "Lifetime revenue from this product."
+      - name: total_units_sold
+        description: "Lifetime units sold."
+      - name: popularity_tier
+        description: "'Best Seller', 'Popular', 'Moderate', 'Niche', 'No Sales'."
+      - name: top_cross_sell_product
+        description: "The product most frequently purchased together with this product. Based on market basket analysis."
+      - name: cross_sell_category
+        description: "Category of the top cross-sell product."
+      - name: cross_sell_strength
+        description: "Number of orders where both products were purchased together. Higher = stronger signal."
+      - name: channel_dominance
+        description: "'Online Dominant', 'Reseller Dominant', or 'Balanced'."
+      - name: revenue_vs_category_avg
+        description: "Ratio vs category average revenue. Values > 1.0 = above average, < 1.0 = below average."
+      - name: category_performance_rank
+        description: "'Star Performer', 'Above Average', 'Below Average', 'Underperformer', or 'No Sales'."
       - name: ai_recommendation_script
-        description: "A pre-written script fragment for the AI to narrate."
+        description: "Dynamic recommendation text that adapts based on the product's performance context."
+      - name: product_narrative
+        description: "Natural language product summary for RAG."
+
+  - name: mart_territory_warroom
+    description: >
+      Geographic intelligence command center. Each row is one sales territory with lifetime 
+      and latest-year performance, market share, YoY growth, channel mix, and strategic assessments.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "Which region has the highest market share?"
+      - "Where are we growing fastest?"
+      - "Which markets are declining?"
+      - "Compare online vs reseller mix by territory"
+      - "What's our revenue per customer in Europe?"
+    columns:
+      - name: territory_id
+        description: "Primary Key."
+        tests:
+          - unique
+          - not_null
+      - name: region_name
+        description: "Sales region name."
+      - name: country_name
+        description: "Country."
+      - name: territory_group
+        description: "Geographic group: 'North America', 'Europe', 'Pacific'."
+      - name: market_priority
+        description: "'Primary Market', 'Secondary Market', 'Emerging Market'."
+      - name: performance_tier
+        description: "'Top Performer', 'Strong', 'Growing', 'Developing'."
+      - name: lifetime_revenue
+        description: "All-time revenue."
+      - name: lifetime_profit
+        description: "All-time profit."
+      - name: market_share_pct
+        description: "This territory's share of total global revenue as a percentage."
+      - name: latest_year_revenue
+        description: "Revenue in the most recent fiscal year."
+      - name: revenue_yoy_growth_pct
+        description: "Year-over-year revenue growth."
+      - name: customer_yoy_growth_pct
+        description: "Year-over-year customer count growth."
+      - name: online_mix_pct
+        description: "Percentage of revenue from online (Internet) channel."
+      - name: revenue_per_customer
+        description: "Lifetime revenue divided by unique customers. Measures customer value density."
+      - name: top_selling_category
+        description: "The product category generating the most revenue in this territory."
+      - name: strategic_assessment
+        description: >
+          AI-generated strategic recommendation with emoji:
+          - '🌟 Champion: Top performer with strong growth.'
+          - '🚀 Rising Star: Strong growth trajectory.'
+          - '⚠️ Fading Giant: Large market but declining.'
+          - '🌱 Opportunity: Untapped potential.'
+      - name: territory_narrative
+        description: "Natural language territory summary for RAG."
+
+  - name: mart_channel_performance
+    description: >
+      B2B vs B2C channel deep-dive by fiscal year. Each row is one (year × channel) combination 
+      with revenue share, growth rates, customer metrics, and channel health assessments.
+      
+      EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
+      - "Is B2B or B2C more profitable?"
+      - "How fast is online growing vs reseller?"  
+      - "What's the average deal size per channel?"
+      - "Which channel has better margins?"
+    columns:
+      - name: fiscal_year
+        description: "Fiscal year."
+      - name: channel_type
+        description: "'Internet' or 'Reseller'."
+      - name: business_model
+        description: "'B2B' (Reseller) or 'B2C' (Internet)."
+      - name: revenue
+        description: "Total revenue for this channel in this year."
+      - name: profit
+        description: "Total profit."
+      - name: avg_margin
+        description: "Average profit margin."
+      - name: order_count
+        description: "Number of orders."
+      - name: unique_customers
+        description: "Distinct customer count."
+      - name: avg_transaction_value
+        description: "Average revenue per line item."
+      - name: revenue_per_customer
+        description: "Revenue divided by unique customers."
+      - name: revenue_share_pct
+        description: "This channel's percentage of total annual revenue."
+      - name: profit_share_pct
+        description: "This channel's percentage of total annual profit."
+      - name: revenue_yoy_growth_pct
+        description: "Year-over-year revenue growth."
+      - name: customer_yoy_growth_pct
+        description: "Year-over-year customer growth."
+      - name: leading_category
+        description: "The top-selling product category for this channel."
+      - name: channel_health
+        description: "'Strong & Profitable', 'Healthy', 'High Volume / Low Margin', or 'Developing'."
+      - name: channel_narrative
+        description: "Natural language summary of this channel's performance."

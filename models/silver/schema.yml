@@ -2,43 +2,283 @@ version: 2
 
 models:
   - name: fct_sales
-    description: "The central fact table containing every transaction. Use this for all revenue, profit, and volume calculations."
+    description: >
+      The central fact table for all sales transactions. Each row represents one line item 
+      from a sales order. This table is denormalized with date and order context to enable 
+      LLM-powered analytics without requiring complex joins. Use this as the primary table 
+      for all revenue, profit, volume, and trend questions.
+      
+      IMPORTANT FOR AI: This table contains pre-joined time dimensions (order_date, fiscal_year, 
+      fiscal_quarter, order_month) and channel information (channel_type). You can answer most 
+      "when" and "how much" questions directly from this table.
     columns:
       - name: sales_order_line_id
         description: "Primary Key. Unique identifier for each line item in an order."
         tests:
           - unique
           - not_null
-
-      - name: total_profit
-        description: "Descriptive Metric: Net profit calculated as (Sales - Cost). Primary KPI for business health."
-
-      - name: profit_margin
-        description: "Descriptive Metric: Profitability ratio. High values (>0.5) indicate premium products."
-
-      - name: customer_cohort
-        description: "Predictive Attribute: Categorizes customers as 'New' or 'Returning' based on purchase history."
-
-  - name: dim_product
-    description: "The product catalog. Use this to filter sales by category, color, or price segment."
-    columns:
       - name: product_id
-        description: "Primary Key. Links to fct_sales."
+        description: "Foreign Key → dim_product. Links this sale to the product catalog."
+      - name: customer_id
+        description: "Foreign Key → dim_customer. Links this sale to the customer profile."
+      - name: territory_id
+        description: "Foreign Key → dim_territory. Links this sale to the geographic region."
+      - name: order_number
+        description: "The human-readable order number (e.g., SO51131). Multiple line items share the same order_number."
+      - name: channel_type
+        description: "Sales channel: 'Internet' (B2C direct) or 'Reseller' (B2B partner). Use this for channel comparison questions."
+      - name: order_date
+        description: "The full calendar date when this order was placed. Use for time-series analysis."
+      - name: fiscal_year
+        description: "The fiscal year of the sale (e.g., 2020, 2021). Use for year-over-year comparisons."
+      - name: fiscal_quarter
+        description: "The fiscal quarter (e.g., Q1, Q2). Use for quarterly trend analysis."
+      - name: order_month
+        description: "The month name of the order. Use for seasonality analysis."
+      - name: quantity
+        description: "Number of units purchased in this line item."
+      - name: unit_price
+        description: "Price per unit in USD."
+      - name: total_cost
+        description: "Total cost of goods sold for this line item in USD."
+      - name: revenue
+        description: "Total sales revenue for this line item in USD. This is the top-line number."
+      - name: profit
+        description: "Net profit = (unit_price × quantity) - total_cost. This is the bottom-line metric for business health."
+      - name: profit_margin_ratio
+        description: "Profitability ratio (0 to 1). Values > 0.5 indicate premium/high-margin products. Values < 0 indicate loss-making sales."
+      - name: profit_tier
+        description: "Human-readable profit classification: 'High Profit' (>$500), 'Medium Profit' (>$100), 'Low Profit' (>$0), or 'Loss-Making'."
+      - name: order_size_category
+        description: "Order quantity classification: 'Bulk Order' (10+), 'Multi-Unit' (3-9), or 'Single Unit' (1-2)."
+      - name: deal_size_tier
+        description: "Revenue-based deal classification: 'Enterprise Deal' ($5000+), 'Mid-Market Transaction' ($1000-4999), 'Standard Sale' ($100-999), 'Micro Transaction' (<$100)."
+      - name: sale_narrative
+        description: "AI-generated natural language description of this sale. Use for semantic search and RAG context."
+
+  - name: dim_customer
+    description: >
+      Customer dimension with pre-aggregated purchase behavior. Each row is one unique customer.
+      This table already includes lifetime value, purchase frequency, retention status, and value tier.
+      
+      IMPORTANT FOR AI: You do NOT need to join this to fct_sales for most customer questions. 
+      Fields like lifetime_revenue, total_transactions, customer_value_tier, and retention_status 
+      are pre-calculated. Use this as the primary table for "who" questions about customers.
+    columns:
+      - name: customer_id
+        description: "Primary Key. Unique customer identifier. Links to fct_sales."
         tests:
           - unique
           - not_null
+      - name: full_name
+        description: "The customer's full name (e.g., 'Jon Yang')."
+      - name: city_name
+        description: "City where the customer is located."
+      - name: state_province
+        description: "State or province of the customer."
+      - name: country_region
+        description: "Country or region (e.g., 'United States', 'Australia', 'Germany')."
+      - name: customer_bio
+        description: "Natural language customer profile string (e.g., 'Jon Yang from Rockhampton, Australia'). Use for AI narration."
+      - name: market_segment
+        description: "'Domestic' (United States) or 'International' (all other countries)."
+      - name: ai_greeting
+        description: "Personalized greeting string (e.g., 'Hi Jon!'). Use for voice AI or chatbot personalization."
+      - name: total_transactions
+        description: "Total number of purchases this customer has ever made."
+      - name: lifetime_revenue
+        description: "Total revenue generated by this customer across all orders in USD."
+      - name: lifetime_profit
+        description: "Total profit generated by this customer across all orders in USD."
+      - name: avg_order_value
+        description: "Average revenue per transaction for this customer."
+      - name: customer_value_tier
+        description: "Customer value classification: 'Platinum' ($10K+), 'Gold' ($5K+), 'Silver' ($1K+), 'Bronze' (<$1K)."
+      - name: purchase_frequency
+        description: "Purchase frequency classification: 'Power Buyer' (20+), 'Regular' (5-19), 'Occasional' (1-4), 'Never Purchased'."
+      - name: retention_status
+        description: "Customer retention status: 'Active' (purchased after June 2021), 'At Risk' (last purchase in 2020-2021), 'Churned' (before 2020), or 'Prospect' (never bought)."
+      - name: search_metadata
+        description: "Lowercase text blob for semantic/vector search over customer attributes."
 
+  - name: dim_product
+    description: >
+      Product catalog dimension with pre-aggregated sales performance. Each row is one unique product.
+      Includes revenue, units sold, popularity tier, and profit metrics pre-calculated.
+      
+      IMPORTANT FOR AI: You do NOT need to join this to fct_sales for product performance questions.
+      Use total_revenue, total_units_sold, and popularity_tier directly from this table.
+    columns:
+      - name: product_id
+        description: "Primary Key. Unique product identifier. Links to fct_sales."
+        tests:
+          - unique
+          - not_null
+      - name: product_sku
+        description: "Stock Keeping Unit code. The internal inventory reference."
+      - name: product_name
+        description: "Full product display name."
+      - name: standard_cost
+        description: "Cost to manufacture/acquire this product in USD."
+      - name: list_price
+        description: "Retail list price in USD."
+      - name: product_color
+        description: "Product color variant (e.g., 'Red', 'Black', 'Silver')."
+      - name: product_model
+        description: "Product model line (e.g., 'Mountain-200', 'Road-750')."
+      - name: subcategory_name
+        description: "Product subcategory (e.g., 'Mountain Bikes', 'Jerseys', 'Tires and Tubes')."
+      - name: category_name
+        description: "Top-level category: 'Bikes', 'Components', 'Clothing', or 'Accessories'."
+      - name: unit_profit_potential
+        description: "Profit per unit if sold at list price: list_price - standard_cost."
+      - name: markup_ratio
+        description: "Markup percentage as a ratio (0 to 1). Higher = more profitable per unit."
       - name: product_role
-        description: "Predictive Attribute: Identifies if a product is a 'Core Product' (Bikes) or an 'Add-on' (Helmets/Lights)."
+        description: "Product classification for recommendations: 'Core Product' (Bikes), 'Component', 'Apparel', or 'Add-on' (Accessories)."
+      - name: price_segment
+        description: "Price tier: 'Ultra-Premium' ($3K+), 'Premium' ($1K+), 'Mid-Range' ($200+), 'Entry-Level' ($20+), 'Budget' (<$20)."
+      - name: total_revenue
+        description: "Lifetime total revenue from this product across all sales."
+      - name: total_profit
+        description: "Lifetime total profit from this product."
+      - name: total_units_sold
+        description: "Lifetime total units sold."
+      - name: total_transactions
+        description: "Number of distinct transactions containing this product."
+      - name: popularity_tier
+        description: "Product popularity: 'Best Seller' (500+ units), 'Popular' (100+), 'Moderate' (10+), 'Niche' (1+), 'No Sales'."
+      - name: search_metadata
+        description: "Lowercase text blob for semantic/vector search over product attributes."
 
   - name: dim_territory
-    description: "Look up table for geographic performance. Use for 'Where' questions."
+    description: >
+      Geographic territory dimension with pre-aggregated sales performance. Each row is one sales region.
+      Includes total revenue, profit, customer count, and performance tier.
+      
+      IMPORTANT FOR AI: Use this table directly for "where" questions about geography and regional performance.
     columns:
+      - name: territory_id
+        description: "Primary Key. Unique territory identifier. Links to fct_sales."
+        tests:
+          - unique
+          - not_null
+      - name: region_name
+        description: "Territory region name (e.g., 'Northwest', 'France', 'Australia')."
+      - name: country_name
+        description: "Country of this territory."
+      - name: territory_group
+        description: "High-level geographic grouping: 'North America', 'Europe', or 'Pacific'."
       - name: market_priority
-        description: "Executive logic: 'Primary Market' (USA/North America) vs 'Emerging Markets'."
+        description: "'Primary Market' (North America), 'Secondary Market' (Europe), or 'Emerging Market' (Pacific/Other)."
+      - name: regional_persona
+        description: "'Domestic' (United States) or 'International' (all other countries)."
+      - name: total_revenue
+        description: "Total revenue generated in this territory."
+      - name: total_profit
+        description: "Total profit generated in this territory."
+      - name: total_transactions
+        description: "Total number of transactions in this territory."
+      - name: unique_customers
+        description: "Number of distinct customers who purchased in this territory."
+      - name: performance_tier
+        description: "Territory performance: 'Top Performer' ($5M+), 'Strong' ($1M+), 'Growing' ($100K+), 'Developing' (<$100K)."
+      - name: search_metadata
+        description: "Lowercase text blob for semantic/vector search over territory attributes."
 
-  - name: dim_customer
-    description: "Customer profile data. Use for personalization and 'Customer Memory'."
+  - name: dim_date
+    description: >
+      The date/calendar dimension. Each row is one calendar day. Use this table for any 
+      time-based filtering, seasonality analysis, or period comparisons. All fiscal year 
+      and fiscal quarter attributes are pre-derived from the source data.
+      
+      IMPORTANT FOR AI: fct_sales already contains fiscal_year, fiscal_quarter, order_date 
+      etc. denormalized. Join to dim_date only when you need calendar-level attributes like 
+      is_weekend, season, day_of_week_name, or day_of_month.
     columns:
-      - name: ai_greeting
-        description: "Contextual string used for ElevenLabs voice generation (e.g., 'Hi Jon!')."
+      - name: date_key
+        description: "Primary Key. Numeric date key (YYYYMMDD) that links to fct_sales.effective_date_key."
+        tests:
+          - unique
+          - not_null
+      - name: date_actual
+        description: "The actual calendar date. Use for range filters."
+      - name: calendar_year
+        description: "The calendar year (e.g., 2017, 2018)."
+      - name: calendar_month_num
+        description: "Month number (1=January, 12=December)."
+      - name: calendar_month_name
+        description: "Month name (e.g., 'July', 'December')."
+      - name: day_of_week_name
+        description: "Day of week name (e.g., 'Monday', 'Saturday')."
+      - name: day_of_week_num
+        description: "Day of week number (0=Sunday, 6=Saturday)."
+      - name: is_weekend
+        description: "Boolean: true if Saturday or Sunday. Use for weekday vs weekend analysis."
+      - name: is_month_start
+        description: "Boolean: true if this is the first day of the month."
+      - name: is_month_end
+        description: "Boolean: true if this is the last day of the month."
+      - name: fiscal_year
+        description: "Fiscal year as integer (e.g., 2018). Derived from the source 'FY2018' label."
+      - name: fiscal_year_label
+        description: "Fiscal year label as string (e.g., 'FY2018')."
+      - name: fiscal_quarter
+        description: "Fiscal quarter abbreviation (e.g., 'Q1', 'Q3')."
+      - name: fiscal_quarter_label
+        description: "Full fiscal quarter label (e.g., 'FY2018 Q1')."
+      - name: fiscal_quarter_num
+        description: "Fiscal quarter as integer (1-4) for sorting."
+      - name: period_label
+        description: "Combined period label for display (e.g., 'FY2018 Q1')."
+      - name: season
+        description: "Meteorological season: 'Winter', 'Spring', 'Summer', 'Autumn'. Use for seasonality questions."
+
+  - name: dim_reseller
+    description: >
+      Reseller/partner dimension. Each row is one reseller (B2B channel partner). 
+      Use for questions about the partner network, wholesale channels, and B2B relationships.
+    columns:
+      - name: reseller_id
+        description: "Primary Key. Unique reseller identifier."
+        tests:
+          - unique
+          - not_null
+      - name: reseller_name
+        description: "Name of the reseller business."
+      - name: business_type
+        description: "Type of reseller: 'Warehouse', 'Value Added Reseller', or 'Specialty Bike Shop'."
+      - name: partner_segment
+        description: "Strategic classification: 'High Volume Partner' (Warehouse), 'Solution Partner' (VAR), 'Specialist Partner', or 'Retail Partner'."
+      - name: partner_tier
+        description: "Partnership level: 'Tier 1 - Strategic', 'Tier 2 - Growth', or 'Tier 3 - Standard'."
+      - name: partner_profile
+        description: "Natural language partner description for AI narration."
+      - name: search_metadata
+        description: "Lowercase text blob for semantic/vector search."
+
+  - name: dim_sales_order
+    description: >
+      Sales order dimension with order-level metrics. Each row is one line item, but includes 
+      order-level aggregations (items_in_order, total_order_value) via window functions.
+      Use for questions about order patterns, B2B vs B2C channels, and wholesale identification.
+    columns:
+      - name: sales_order_line_id
+        description: "Primary Key. Unique line item identifier. Links to fct_sales."
+        tests:
+          - unique
+          - not_null
+      - name: order_number
+        description: "Human-readable order number (e.g., 'SO51131')."
+      - name: channel_type
+        description: "'Internet' (B2C) or 'Reseller' (B2B)."
+      - name: business_segment
+        description: "Business model: 'B2B' (Reseller channel) or 'B2C' (Internet channel)."
+      - name: items_in_order
+        description: "Total number of line items in this order."
+      - name: total_order_value
+        description: "Total revenue value across all lines in this order."
+      - name: order_size_category
+        description: "'Large Order' (10+ items), 'Medium Order' (6-10), or 'Small Order' (1-5)."
+      - name: is_wholesale_candidate
+        description: "Boolean flag. True if order has >5 items, suggesting wholesale/B2B behavior."

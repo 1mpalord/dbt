@@ -2,27 +2,53 @@
 
 WITH base AS (
     SELECT * FROM {{ ref('stg_sales_orders') }}
+),
+
+order_metrics AS (
+    SELECT 
+        sales_order_line_id,
+        total_sales,
+        quantity
+    FROM {{ ref('stg_sales') }}
 )
 
 SELECT 
-    *,
-    -- 1. Descriptive: Order Complexity
-    -- Counts how many lines are in this specific order
-    COUNT(*) OVER (PARTITION BY order_number) AS items_in_order,
+    b.sales_order_line_id,
+    b.order_number,
+    b.order_line_item,
+    b.channel_type,
+    b.sales_order_id,
 
-    -- 2. Behavioral: Channel Tagging
-    -- Helps the AI Agent distinguish between B2B (Reseller) and B2C (Internet)
+    -- Order complexity: items per order
+    COUNT(*) OVER (PARTITION BY b.order_number) AS items_in_order,
+
+    -- Total order value (all lines in this order)
+    SUM(om.total_sales) OVER (PARTITION BY b.order_number) AS total_order_value,
+
+    -- Business segment classification
     CASE 
-        WHEN channel_type = 'Reseller' THEN 'B2B'
-        WHEN channel_type = 'Internet' THEN 'B2C'
+        WHEN b.channel_type = 'Reseller' THEN 'B2B'
+        WHEN b.channel_type = 'Internet' THEN 'B2C'
         ELSE 'Direct'
     END AS business_segment,
 
-    -- 3. Predictive: Large Order Flag
-    -- If an order has > 5 items, it might be a wholesale signal for the AI
+    -- Order size classification
     CASE 
-        WHEN COUNT(*) OVER (PARTITION BY order_number) > 5 THEN 1 
-        ELSE 0 
-    END AS is_wholesale_candidate
+        WHEN COUNT(*) OVER (PARTITION BY b.order_number) > 10 THEN 'Large Order'
+        WHEN COUNT(*) OVER (PARTITION BY b.order_number) > 5 THEN 'Medium Order'
+        ELSE 'Small Order'
+    END AS order_size_category,
 
-FROM base
+    -- Wholesale flag
+    CASE 
+        WHEN COUNT(*) OVER (PARTITION BY b.order_number) > 5 THEN true
+        ELSE false
+    END AS is_wholesale_candidate,
+
+    -- AI search metadata
+    LOWER(
+        b.order_number || ' | ' || b.channel_type || ' | line ' || CAST(b.order_line_item AS VARCHAR)
+    ) AS search_metadata
+
+FROM base b
+LEFT JOIN order_metrics om ON b.sales_order_line_id = om.sales_order_line_id
