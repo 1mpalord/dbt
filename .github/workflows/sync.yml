@@ -1,0 +1,45 @@
+name: dbt Manifest Sync to n8n
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  sync_to_n8n:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+      SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+      SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+      SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+      SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+      N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+      # Default schemas if not provided in secrets
+      DBT_DEV_SCHEMA: ${{ secrets.DBT_DEV_SCHEMA || 'public' }}
+      DBT_PROD_SCHEMA: ${{ secrets.DBT_PROD_SCHEMA || 'public' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile dbt
+        run: |
+          dbt compile --profiles-dir .
+
+      - name: Sync Manifest to n8n
+        run: |
+          python scripts/sync_manifest.py

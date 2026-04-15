@@ -1,0 +1,29 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('SUPABASE_HOST') }}"
+      user: "{{ env_var('SUPABASE_USER') }}"
+      password: "{{ env_var('SUPABASE_PASSWORD') }}"
+      port: "{{ env_var('SUPABASE_PORT', '5432') | int }}"
+      dbname: "{{ env_var('SUPABASE_DB_NAME', 'postgres') }}"
+      schema: "{{ env_var('DBT_DEV_SCHEMA', 'dbt_dev') }}"
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      # Supabase requires SSL
+      sslmode: require
+
+    prod:
+      type: postgres
+      host: "{{ env_var('SUPABASE_HOST') }}"
+      user: "{{ env_var('SUPABASE_USER') }}"
+      password: "{{ env_var('SUPABASE_PASSWORD') }}"
+      port: "{{ env_var('SUPABASE_PORT', '5432') | int }}"
+      dbname: "{{ env_var('SUPABASE_DB_NAME', 'postgres') }}"
+      schema: "{{ env_var('DBT_PROD_SCHEMA', 'public') }}"
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      sslmode: require
