@@ -14,6 +14,10 @@ models:
       - revenue_trend_signal: Pre-computed trend indicator with emoji (🚀, 📈, 📉, 🔻).
       - margin_health: Profitability assessment per segment.
       
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED. Do NOT use functions like `SUM(revenue)` or `COUNT(unique_customers)`. 
+      Just `SELECT revenue` or `SELECT unique_customers` directly, or SUM() them ONLY if you are rolling up to a higher grouping (like grouping by `fiscal_year`).
+      
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "Which product category grew the fastest last year?"
       - "What's our margin health in Europe?"
@@ -78,6 +82,10 @@ models:
       IMPORTANT FOR AI: This is a SELF-CONTAINED table. You do NOT need to join to any other 
       table to answer customer questions. Lifetime revenue, retention status, value tier, 
       favorite category, channel preference, and recommended actions are all pre-computed.
+      
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED. DO NOT TRY TO `SUM()` or `COUNT()` metrics for a single customer. 
+      Use the `lifetime_revenue`, `lifetime_profit`, and `total_orders` columns directly.
       
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "Who are our top 10 VIP customers?"
@@ -146,6 +154,10 @@ models:
       - Category benchmarking: compares each product against its category average.
       - Dynamic AI scripts: recommendation text changes based on product performance context.
       
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED at the product level. DO NOT TRY TO `SUM(revenue)`. 
+      Use the `total_revenue` and `total_units_sold` columns directly!
+      
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "What's our best selling product?"
       - "Which products should we bundle together?"
@@ -194,6 +206,11 @@ models:
     description: >
       Geographic intelligence command center. Each row is one sales territory with lifetime 
       and latest-year performance, market share, YoY growth, channel mix, and strategic assessments.
+      
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED. Do NOT hallucinate raw columns like `revenue` or `profit`.
+      You MUST use the pre-calculated columns: `lifetime_revenue`, `latest_year_revenue`, `unique_customers`. 
+      NEVER try to do `COUNT(customer_id)`.
       
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "Which region has the highest market share?"
@@ -250,6 +267,10 @@ models:
       B2B vs B2C channel deep-dive by fiscal year. Each row is one (year × channel) combination 
       with revenue share, growth rates, customer metrics, and channel health assessments.
       
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED. Do NOT try to `SUM(revenue)` or `COUNT(customer_id)`. 
+      Use the pre-calculated `revenue`, `profit`, and `unique_customers` columns directly.
+      
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "Is B2B or B2C more profitable?"
       - "How fast is online growing vs reseller?"  
@@ -296,6 +317,11 @@ models:
       Strategic Account Management mart for B2B wholesale partners. Every row is one 
       reseller, enriched with YoY growth, health status, product breadth, and AI-driven 
       strategic action plans.
+      
+      🚨 ATTENTION AI 🚨 
+      This table is PRE-AGGREGATED at the reseller level. Do NOT hallucinate raw transaction columns.
+      Use `lifetime_revenue`, `latest_year_revenue`, and `distinct_products_stocked` directly. 
+      DO NOT try to `SUM(revenue)`.
       
       EXAMPLE AI QUERIES THIS TABLE CAN ANSWER:
       - "Which of our B2B partners is growing the fastest?"
