@@ -55,7 +55,7 @@ SELECT
     (s.unit_price * s.quantity) - s.total_cost AS profit,
     CASE 
         WHEN s.total_sales > 0 
-        THEN ROUND(((s.unit_price * s.quantity) - s.total_cost) / s.total_sales, 4) 
+        THEN ROUND(CAST((((s.unit_price * s.quantity) - s.total_cost) / s.total_sales) AS NUMERIC), 4) 
         ELSE 0 
     END AS profit_margin_ratio,
 
