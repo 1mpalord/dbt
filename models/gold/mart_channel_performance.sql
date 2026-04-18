@@ -83,14 +83,14 @@ SELECT
 
     CASE 
         WHEN yt.total_profit > 0 
-        THEN ROUND(cy.profit / yt.total_profit * 100, 2) 
+        THEN ROUND((cy.profit / yt.total_profit * 100)::NUMERIC, 2) 
         ELSE 0 
     END AS profit_share_pct,
 
     -- YoY growth
     CASE 
         WHEN COALESCE(pyc.prev_revenue, 0) > 0 
-        THEN ROUND((cy.revenue - pyc.prev_revenue) / pyc.prev_revenue * 100, 2) 
+        THEN ROUND(((cy.revenue - pyc.prev_revenue) / pyc.prev_revenue * 100)::NUMERIC, 2) 
         ELSE NULL 
     END AS revenue_yoy_growth_pct,
 
@@ -118,7 +118,7 @@ SELECT
     cy.business_model || ' (' || cy.channel_type || ') in ' || CAST(cy.fiscal_year AS VARCHAR) || ': '
     || '$' || CAST(cy.revenue AS VARCHAR) || ' revenue '
     || '(' || CAST(
-        CASE WHEN yt.total_revenue > 0 THEN ROUND(cy.revenue / yt.total_revenue * 100, 2) ELSE 0 END
+        CASE WHEN yt.total_revenue > 0 THEN ROUND((cy.revenue / yt.total_revenue * 100)::NUMERIC, 2) ELSE 0 END
         AS VARCHAR
     ) || '% share), '
     || CAST(cy.unique_customers AS VARCHAR) || ' customers, '
