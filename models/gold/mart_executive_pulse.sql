@@ -95,13 +95,13 @@ SELECT
     -- Year-over-Year growth rates
     CASE 
         WHEN COALESCE(py.prev_revenue, 0) > 0 
-        THEN ROUND((cp.revenue - py.prev_revenue) / py.prev_revenue * 100, 2) 
+        THEN ROUND(((cp.revenue - py.prev_revenue) / py.prev_revenue * 100)::NUMERIC, 2) 
         ELSE NULL 
     END AS revenue_yoy_growth_pct,
 
     CASE 
         WHEN COALESCE(py.prev_profit, 0) > 0 
-        THEN ROUND((cp.profit - py.prev_profit) / py.prev_profit * 100, 2) 
+        THEN ROUND(((cp.profit - py.prev_profit) / py.prev_profit * 100)::NUMERIC, 2) 
         ELSE NULL 
     END AS profit_yoy_growth_pct,
 
