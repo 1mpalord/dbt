@@ -77,7 +77,7 @@ SELECT
     -- Channel share of total
     CASE 
         WHEN yt.total_revenue > 0 
-        THEN ROUND(cy.revenue / yt.total_revenue * 100, 2) 
+        THEN ROUND((cy.revenue / yt.total_revenue * 100)::NUMERIC, 2) 
         ELSE 0 
     END AS revenue_share_pct,
 

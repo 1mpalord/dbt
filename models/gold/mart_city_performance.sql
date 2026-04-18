@@ -137,7 +137,7 @@ SELECT
     COALESCE(cpy.prev_year_revenue, 0) AS prev_year_revenue,
     CASE 
         WHEN COALESCE(cpy.prev_year_revenue, 0) > 0 
-        THEN ROUND((COALESCE(cly.latest_year_revenue, 0) - cpy.prev_year_revenue) / cpy.prev_year_revenue * 100, 2)
+        THEN ROUND(((COALESCE(cly.latest_year_revenue, 0) - cpy.prev_year_revenue) / cpy.prev_year_revenue * 100)::NUMERIC, 2)
         ELSE NULL 
     END AS yoy_growth_pct,
 
