@@ -116,7 +116,7 @@ SELECT
     -- Profitability Efficiency
     CASE 
         WHEN cl.lifetime_revenue > 0 
-        THEN ROUND(cl.lifetime_profit / cl.lifetime_revenue, 4) 
+        THEN ROUND(CAST(cl.lifetime_profit / cl.lifetime_revenue AS NUMERIC), 2)
         ELSE 0 
     END AS lifetime_margin,
 
