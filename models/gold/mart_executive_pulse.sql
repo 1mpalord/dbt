@@ -82,7 +82,7 @@ SELECT
     -- Contribution analysis (what % of total revenue does this segment represent)
     CASE 
         WHEN yt.year_total_revenue > 0 
-        THEN ROUND(cp.revenue / yt.year_total_revenue * 100, 2) 
+        THEN ROUND((cp.revenue / yt.year_total_revenue * 100)::NUMERIC, 2) 
         ELSE 0 
     END AS revenue_contribution_pct,
 
