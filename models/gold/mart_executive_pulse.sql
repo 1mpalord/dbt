@@ -88,7 +88,7 @@ SELECT
 
     CASE 
         WHEN yt.year_total_profit > 0 
-        THEN ROUND(cp.profit / yt.year_total_profit * 100, 2) 
+        THEN ROUND(CAST((cp.profit / yt.year_total_profit * 100) AS NUMERIC), 2)
         ELSE 0 
     END AS profit_contribution_pct,
 
