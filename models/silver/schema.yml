@@ -12,6 +12,13 @@ models:
       fiscal_quarter, order_month) and channel information (channel_type). You can answer most 
       "when" and "how much" questions directly from this table.
       
+      🚨 STRATEGIC GUIDANCE FOR AGENT:
+      - GRANULARITY: Each row is a single line item. To find total order value, SUM(revenue) GROUP BY order_number.
+      - RATIO CALCULATIONS: Never average 'profit_margin_ratio'. Always calculate it as: SUM(profit) / NULLIF(SUM(revenue), 0).
+      - CHANNEL FILTERING: If a user asks for "Online" or "Web" sales, filter by channel_type = 'Internet'. For "Partner" or "Wholesale," use 'Reseller'.
+      - TIME SENSITIVITY: Use 'order_date' for trend lines and 'fiscal_year' for formal financial reporting.
+      - AI NARRATIVE: Use the 'sale_narrative' column when a user asks for a "summary" of a specific transaction to provide a human-like response.
+      
       🚨 ATTENTION AI: STAR SCHEMA ROUTING 🚨
       This is a FACT table. It contains the core metrics, but lacks granular attributes like `city_name` or `category_name`. 
       If you need granular attributes, YOU MUST JOIN IT to the correct dimension using these exact patterns:
@@ -75,6 +82,12 @@ models:
       Customer dimension with pre-aggregated purchase behavior. Each row is one unique customer.
       This table already includes lifetime value, purchase frequency, retention status, and value tier.
       
+      🚨 STRATEGIC GUIDANCE FOR AGENT:
+      - PRE-COMPUTED METRICS: Use 'lifetime_revenue' and 'total_transactions' for "Top Customer" queries instead of joining to facts. It is faster and more accurate.
+      - TARGETING: Use 'retention_status' to identify customers for marketing (e.g., 'At Risk' needs a win-back offer).
+      - PERSONA: Use 'ai_greeting' and 'customer_bio' to draft personalized emails or chat responses.
+      - SEARCH: When a user provides a name with typos, search against 'search_metadata'.
+
       IMPORTANT FOR AI: You do NOT need to join this to fct_sales for most customer questions. 
       Fields like lifetime_revenue, total_transactions, customer_value_tier, and retention_status 
       are pre-calculated. Use this as the primary table for "who" questions about customers.
@@ -120,6 +133,12 @@ models:
       Product catalog dimension with pre-aggregated sales performance. Each row is one unique product.
       Includes revenue, units sold, popularity tier, and profit metrics pre-calculated.
       
+      🚨 STRATEGIC GUIDANCE FOR AGENT:
+      - CROSS-SELL LOGIC: 'product_role' tells you the item's purpose. If a customer buys a 'Core Product' (Bike), suggest an 'Add-on' (Accessory).
+      - PRICE SENSITIVITY: Use 'price_segment' to filter for "luxury" vs "budget" options.
+      - PERFORMANCE: Use 'popularity_tier' to identify "Best Sellers" for recommendations.
+      - MARGIN ANALYSIS: Use 'markup_ratio' to identify which products are most profitable to promote.
+
       IMPORTANT FOR AI: You do NOT need to join this to fct_sales for product performance questions.
       Use total_revenue, total_units_sold, and popularity_tier directly from this table.
     columns:
